@@ -1,0 +1,228 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:fn="http://java.sun.com/jsp/jstl/functions">
+
+    <h:head>
+        <title>Demo - DataExporter</title>
+    </h:head>
+
+    <h:body>
+        <h1 class="ui-widget-header ui-corner-all" align="center">REGISTRO DE PERSONA</h1>
+        <p:growl id="mnsj" showDetail="true" widgetVar="growlWV" sticky="9999999"/>
+        <center>
+            <h:form id="formIns">
+                <p:commandButton value="Agregar Persona" 
+                                 icon="ui-icon-plusthick"
+                                 oncomplete="PF('WVRegistrar').show();"
+                                 update="DGRegistrar"
+                                 styleClass="black-btn"
+                                 style="margin-top: 0;margin-bottom: 10px;"/>
+
+                <p:dialog showEffect="explode" 
+                          modal="true" 
+                          hideEffect="bounce" 
+                          header="REGISTRAR PERSONA"
+                          id="DGRegistrar" 
+                          widgetVar="WVRegistrar" >
+                    <center>
+
+                        <p:panelGrid id="Tabla"
+                                     columns="2">         
+                            <p:outputLabel value="ID :"/>
+                            <p:inputText value="#{personaC.persona.IDPER}" 
+                                         required="true"
+                                         requiredMessage="Ingrese DNI"
+                                         maxlength="3" size="6">
+                                <p:keyFilter regEx="/[0-9_]/i"/> 
+                            </p:inputText>  
+                            <p:outputLabel value="NOMBRE :"/> 
+                            <p:inputText value="#{personaC.persona.NOMPER}" 
+                                         required="true"                                          
+                                         requiredMessage="Datos Incompletos"
+                                         onfocus="true">
+                                <p:keyFilter regEx="/[a-z_A-Z_ñ _á_é_í_ó_ú]/"/>
+                            </p:inputText>
+                            <p:outputLabel value="APELLIDO :"/> 
+                            <p:inputText value="#{personaC.persona.APEPER}" 
+                                         required="true"
+                                         requiredMessage="Datos Incompletos">
+                                <p:keyFilter regEx="/[a-z_A-Z_ñ _á_é_í_ó_ú]/"/>
+                            </p:inputText>
+                            <p:outputLabel value="DNI :"/> 
+                            <p:inputText value="#{personaC.persona.DNIPER}" 
+                                         required="true"
+                                         requiredMessage="Ingrese DNI"
+                                         maxlength="8" size="6">
+                                <p:keyFilter regEx="/[0-9_]/i"/> 
+                            </p:inputText>                       
+                        </p:panelGrid>
+
+                        <br></br>
+                        <br></br>
+
+                        <p:commandButton value="Registrar" 
+                                         actionListener="#{personaC.registrar()}"
+                                         update="formIns :mnsj"/>
+                        <p:commandButton value="Limpiar"
+                                         icon="ui-icon-trash"
+                                         actionListener="#{personaC.limpiar()}" 
+                                         update="Tabla" process="@this" 
+                                         styleClass="black-btn"/>
+                    </center>
+                </p:dialog>
+
+            </h:form>
+        </center>
+
+
+        <h:form id="form">
+            <center>
+                <h:commandLink>
+                    <h:graphicImage url="./img/pdf.png" />
+                    <p:dataExporter type="pdf" target="dtTabla" fileName="excelPersonas" pageOnly="true" />                                
+                </h:commandLink>
+                <h:commandLink>
+                    <h:graphicImage url="./img/excel.png" />
+                    <p:dataExporter type="csv" target="dtTabla" fileName="excelPersonas" pageOnly="true" />                                
+                </h:commandLink>
+            </center>
+
+            <p:dataTable id="dtTabla" 
+                         value="#{personaC.listadoper}"
+                         var="lista" 
+                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink}"
+                         paginator="true" 
+                         rows="5"
+                         rowHover="true"
+                         style="margin-bottom:20px"
+                         filteredValue="#{personaC.listadoper2}"
+                         emptyMessage="No hay Registro que mostrar">                   
+
+
+                <p:column headerText="NOMBRES">                   
+                    <h:outputText value="#{lista.NOMPER}"/>                    
+                </p:column>
+                <p:column headerText="APELLIDOS">                   
+                    <h:outputText value="#{lista.APEPER}"/>                    
+                </p:column>
+                <p:column headerText="DNI" >                    
+                    <h:outputText value="#{lista.DNIPER}"/>                   
+                </p:column>                             
+
+                <!-- Modificar -->
+                <p:column width="35" exportable="false">
+                    <p:commandButton icon="ui-icon-pencil"
+                                     oncomplete="PF('wdlgDatos').show();" 
+                                     update=":dlgDatos dtTabla" 
+                                     id="grow"
+                                     styleClass="orange-btn">
+                        <f:setPropertyActionListener value="#{lista}" target="#{personaC.persona}"/>                 
+                    </p:commandButton>
+                    <p:tooltip id="toolTipGrow" 
+                               for="grow" 
+                               value="MODIFICAR"
+                               showEffect="clip" 
+                               hideEffect="explode" 
+                               position="left"/>
+                </p:column> 
+                <!--Eliminar-->
+                <p:column width="35" exportable="false">
+                    <p:commandButton icon="ui-icon-circle-close" 
+                                     update="dtTabla" 
+                                     style="background:#EE6F6F;"
+                                     actionListener="#{personaC.eliminar(lista)}" 
+                                     id="elim">
+                        <p:confirm header="Confirmación" 
+                                   message="¿Deseas Eliminar? " 
+                                   icon="ui-icon-alert" />
+                        <p:tooltip trackMouse="true"/>
+                    </p:commandButton>
+                    <p:tooltip id="eliminar" 
+                               for="elim" 
+                               value="ELIMINAR"
+                               showEffect="clip" 
+                               hideEffect="explode" 
+                               position="left"/>
+                </p:column>  
+            </p:dataTable>
+        </h:form>
+
+
+        <p:dialog showEffect="explode" modal="true" hideEffect="explode" header="EDITAR PERSONA"
+                  id="dlgDatos" widgetVar="wdlgDatos" >
+            <h:form>
+                <p:panelGrid columns="2"
+                             styleClass="ui-panelgrid-blank ui-fluid"
+                             columnClasses="ui-g-12 ui-md-2">
+                    <p:outputLabel value="NOMBRE"/> 
+                    <p:inputText value="#{personaC.persona.NOMPER}" 
+                                 required="true" 
+                                 requiredMessage="Ingrese Nombre">
+                        <p:keyFilter regEx="/[a-z_A-Z_ñ _á_é_í_ó_ú]/"/>
+                    </p:inputText>
+                    <p:outputLabel value="APELLIDO"/> 
+                    <p:inputText value="#{personaC.persona.APEPER}" 
+                                 required="true" 
+                                 requiredMessage="Ingrese Apellido">
+                        <p:keyFilter regEx="/[a-z_A-Z_ñ _á_é_í_ó_ú]/"/>
+                    </p:inputText>
+                    <p:outputLabel value="DNI"/> 
+                    <p:inputText value="#{personaC.persona.DNIPER}" 
+                                 maxlength="8" 
+                                 size="8" 
+                                 onkeypress="return ValidarDni(event);">
+                        <p:keyFilter regEx="/[0-9_]/i" />  
+                    </p:inputText>                    
+                </p:panelGrid>
+
+                <p:spacer/>
+
+                <center>
+                    <p:commandButton value="Actualizar" 
+                                     icon="ui-icon-pencil"
+                                     actionListener="#{personaC.modificar()}"
+                                     update="form :mnsj" 
+                                     oncomplete="if (args &amp;&amp; !args.validationFailed)PF('wdlgDatos').hide();" 
+                                     >
+                        <p:confirm header="Confirmación" 
+                                   message="¿Deseas Modificar? " 
+                                   icon="ui-icon-alert" />
+                        <p:tooltip trackMouse="true"/>
+                    </p:commandButton>  
+                    <p:commandButton value="Cancelar" 
+                                     icon="ui-icon-close"
+                                     immediate="true" 
+                                     oncomplete="PF('wdlgDatos').hide();" 
+                                     styleClass="black-btn"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+
+
+        <h:form>
+            <p:confirmDialog global="true"
+                             showEffect="fade" 
+                             hideEffect="fade">
+                <center>
+                    <p:commandButton value="Si" 
+                                     type="button" 
+                                     styleClass="ui-confirmdialog-yes" 
+                                     icon="ui-icon-check" 
+                                     style="background: #cccccc"/>
+                    <p:commandButton value="No" 
+                                     type="button" 
+                                     styleClass="ui-confirmdialog-no"
+                                     icon="ui-icon-close" 
+                                     style="background: #EE6F6F"/>
+                </center>
+            </p:confirmDialog>
+        </h:form>     
+
+    </h:body>
+</html>
+
